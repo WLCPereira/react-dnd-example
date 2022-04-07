@@ -1,46 +1,10 @@
 import React from "react";
-import Grid from "@mui/material/Grid"
 import Box from "@mui/material/Box"
-// import { styled } from "@mui/system"
-import styled from "styled-components";
+import { styled } from "@mui/system"
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
-type StateKeys = 'items' | 'items2' | 'items3';
 
-const BoxItem = styled.div<React.PropsWithChildren<React.HTMLAttributes<HTMLElement>>>`
-    min-width: 100px;
-    min-height: 100px;
-    background-color: yellow;
-    border-radius: 6px;
-    padding: 8px;
-    &.dropArea {
-        display: flex;
-        align-items:center;
-        width: 100%;
-        height: auto;
-        background-color: #c3c3c3;
-        margin: 0;
-
-        gap: 8px;
-        &.isDraggingOver {
-            background-color: #37efef;
-        }
-    }
-    &.dragObj {
-        flex: 0 1 0;
-        &.first {
-            background-color: red;
-        }
-        &.second {
-            background-color: blue;
-        }
-        &.isDragging {
-            border: 2px doted red;
-        }
-    }
-
-`;
-
+// ******* DATA ********
 const data = [{
     id: "5f832341cc119a50d1adb972",
     picture: "http://placehold.it/32x32",
@@ -64,8 +28,80 @@ const data = [{
     },
 },]
 
+// ****** TYPES ********
+type StateKeys = 'items' | 'items2' | 'items3';
 type StateType = { [key in StateKeys]: typeof data }
+type CustomDragElement = {id:string, name:string, index: number} 
+// ****** STYLED ******
+const BoxItem = styled(Box)`
+    min-width: 100px;
+    min-height: 100px;
+    border-radius: 6px;
+    padding: 8px;
+    &.container{
+        display: flex;
+        align-items: flex-start;
+        justify-content: baseline;
+        flex-flow: row wrap;
+        gap: 24px
+    }
+    &.dropArea {
+        display: flex;
+        align-items:center;
+        width: 100%;
+        height: auto;
+        background-color: #c3c3c3;
+        margin: 0;
 
+        gap: 8px;
+        &.isDraggingOver {
+            background-color: #37efef;
+        }
+    }
+    &.dragObj {
+        flex: 1;
+        width:100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: yellow;
+        & > .handler {
+            width: 64px;
+            height: 64px;
+            background-color: red;
+            border-radius:100px;
+        }
+        &.first {
+            background-color: red;
+        }
+        &.second {
+            background-color: blue;
+        }
+        &.isDragging {
+            border: 2px dashed red;
+        }
+    }
+`;
+// **** COMPONENTS ****** 
+function DragItem({id, name, index}: CustomDragElement) {
+    return (
+        <Draggable key={id} draggableId={id} index={index} disableInteractiveElementBlocking={false}>
+            {(provided, snapshot) => (
+                <BoxItem 
+                    ref={provided.innerRef} 
+                    {...provided.draggableProps} 
+                    className={`dragObj ${snapshot.isDragging ? 'isDragging' : ''}`}
+                >
+                    <div {...provided.dragHandleProps} className="handler" />
+                    <div>{name}</div>
+                    <button onClick={() => alert(name)}>Click me</button>
+                </BoxItem>
+            )}
+        </Draggable>
+    )
+}
+
+// **** DRAG AND DROP
 export default function DragAndDrop() {
     const [list, reorderList] = React.useState<StateType>({
         items: [data[0]],
@@ -89,49 +125,22 @@ export default function DragAndDrop() {
     }, []);
 
     return (
-        <Box sx={{ flexGrow: 1, display: 'flex', gap: 3, flexFlow: 'colunm wrap', alingItems: 'start' }}>
+        <BoxItem className="container">
             <DragDropContext onDragEnd={onDragEnd}>
-                {Object.keys(list).map((item, idx) => (
-                    <Droppable droppableId={item} key={item} type="TEST">
+                {Object.keys(list).map((item, _idx) => (
+                    <Droppable droppableId={item} key={item} direction="horizontal">
                         {(provided, snapshot) => (
-                            <div ref={provided.innerRef} className={`dropArea ${snapshot.isDraggingOver ? 'isDraggingOver' : ''}`} {...provided.droppableProps} >
-                                <BoxItem className={`dropArea ${snapshot.isDraggingOver ? 'isDraggingOver' : ''}`}>
-                                    {(list[item as StateKeys] as typeof data).map((data, index: number) => (
-                                        <Draggable key={data.id} draggableId={data.id} index={index}>{(provided, snapshot) => (
-                                            <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className={`dragObj ${snapshot.isDragging ? 'isDraggingOver' : ''}`}>
-                                                <BoxItem className={`dragObj ${snapshot.isDropAnimating ? 'isDragging' : ''}`}><span>{data.name.first}</span></BoxItem>
-                                            </div>
-                                        )}</Draggable>
-                                    ))}
-                                </BoxItem>
+                            <BoxItem  ref={provided.innerRef} {...provided.droppableProps} className={`dropArea ${snapshot.isDraggingOver ? 'isDraggingOver' : ''}`}>
+                                {(list[item as StateKeys] as typeof data).map((data, index: number) => (
+                                    <DragItem id={data.id} name={data.name.first} key={data.id} index={index}/>
+                                ))}
                                 {provided.placeholder}
-                            </div>
+                            </BoxItem>
                         )}
 
                     </Droppable>
                 ))}
-                {/* <Droppable droppableId="items" type="PERSON">
-                    {(provided, snapshot) => (
-                        <div ref={provided.innerRef}  {...provided.droppableProps}>
-                            <BoxItem className={`dropArea ${snapshot.isDraggingOver ? 'isDraggingOver' : ''}`}>
-                                {state.items.map((person, index) => (
-                                    <Draggable draggableId={person.id} key={person.id} index={index} >
-                                        {(provided, snapshot) => (
-                                            <div ref={provided.innerRef}  {...provided.draggableProps} {...provided.dragHandleProps} >
-                                                <BoxItem className={`dragObj ${snapshot.isDragging ? 'isDragging' : ''}`}>
-                                                    <span>{person.name.first}</span>
-                                                </BoxItem>
-                                            </div>
-                                        )}
-                                    </Draggable>
-                                ))}
-                                {provided.placeholder}
-                                {console.log(provided)}
-                            </BoxItem>
-                        </div>
-                    )}
-                </Droppable> */}
             </DragDropContext>
-        </Box>
+        </BoxItem>
     )
 }

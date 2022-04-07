@@ -1,11 +1,11 @@
 import React, { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
+import { render } from "react-dom";
 import ThemeProvider from "@mui/system/ThemeProvider";
 import createTheme from "@mui/system/createTheme";
 import DragAndDrop from "./Cases/DragAndDrop";
 
 const rootElement = document.querySelector("#root") as HTMLElement;
-const root = createRoot(rootElement)
+
 
 const theme = createTheme({
     components: {
@@ -41,10 +41,10 @@ const theme = createTheme({
     },
 });
 
-root.render(
+render(
     <StrictMode>
         <ThemeProvider theme={theme} >
             <DragAndDrop />
         </ThemeProvider>
-    </StrictMode >
+    </StrictMode >, rootElement
 )
